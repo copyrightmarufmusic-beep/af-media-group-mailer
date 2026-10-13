@@ -8,7 +8,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 ROOT = Path(__file__).parent
-ASSETS = ROOT / "assets"
+ASSETS = ROOT  # Images are stored in the repository root.
 
 st.set_page_config(
     page_title="CRY DIGITAL MEDIA | Mail Operations",
