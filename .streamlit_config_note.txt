@@ -1,0 +1,1 @@
+For Streamlit Community Cloud, select fast_mailer.py as the app entrypoint. Configure secrets in the hosting dashboard if you later adapt the app to read secrets; do not commit SMTP passwords.

@@ -1,0 +1,136 @@
+import streamlit as st
+import smtplib
+import time
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+
+# পেজ সেটআপ ও প্রফেশনাল ডার্ক ডিজাইন
+st.set_page_config(page_title="AF Media Unlimited Bot", page_icon="🔥", layout="wide")
+
+st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #020024 0%, #090979 35%, #00d4ff 100%);
+        color: white;
+    }
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        color: #00ffcc !important;
+        border: 2px solid #00ffcc !important;
+    }
+    .stButton>button {
+        background: linear-gradient(90deg, #ff8c00 0%, #ff0080 100%);
+        color: white;
+        font-weight: bold;
+        border-radius: 30px;
+        border: none;
+        height: 50px;
+        width: 100%;
+        font-size: 20px;
+    }
+    .status-box {
+        padding: 20px;
+        border-radius: 15px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid #00ffcc;
+        text-align: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("🔥 AF Media Unlimited Auto-Mailer Pro")
+st.write("একবার স্টার্ট দিন, আর বারবার ক্লিক করার ঝামেলা নেই!")
+
+# --- কনফিগারেশন সাইডবার ---
+with st.sidebar:
+    st.header("⚙️ সেটিংস প্যানেল")
+    email_user = st.text_input("আপনার জিমেইল", placeholder="ughh41053@gmail.com")
+    email_pass = st.text_input("অ্যাপ পাসওয়ার্ড", type="password", placeholder="পাসওয়ার্ড দিন")
+    
+    st.divider()
+    
+    delay = st.slider("প্রতি মেইলের মাঝখানে বিরতি (সেকেন্ড)", 1, 60, 2)
+    st.info(f"বটটি প্রতি {delay} সেকেন্ড পর পর একটি করে মেইল পাঠাবে।")
+    
+    st.divider()
+    st.caption("Developed by MD Maruf | CRY Digital")
+
+# --- মেইল কন্টেন্ট ---
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    target_email = st.text_input("📩 প্রাপকের ইমেইল (To)")
+    mail_subject = st.text_input("📌 ইমেইল সাবজেক্ট")
+    
+with col2:
+    mail_body = st.text_area("📝 মেসেজ বডি", height=150)
+
+# সেশন স্টেট কন্ট্রোল
+if 'run_bot' not in st.session_state:
+    st.session_state.run_bot = False
+
+# বাটন সেকশন
+btn_col1, btn_col2 = st.columns(2)
+
+with btn_col1:
+    if st.button("🚀 আনলিমিটেড পাঠানো শুরু করুন"):
+        st.session_state.run_bot = True
+
+with btn_col2:
+    if st.button("🛑 বট থামিয়ে দিন"):
+        st.session_state.run_bot = False
+
+# --- লুপ সেকশন ---
+if st.session_state.run_bot:
+    if not email_user or not email_pass or not target_email:
+        st.error("⚠️ দয়াকরে জিমেইল, পাসওয়ার্ড এবং প্রাপকের ঠিকানা দিন!")
+        st.session_state.run_bot = False
+    else:
+        counter = 0
+        start_time = datetime.now().strftime("%H:%M:%S")
+        
+        # স্ট্যাটাস ডিসপ্লে এরিয়া
+        info_area = st.empty()
+        
+        try:
+            # সার্ভার লগইন (একবার লগইন করে লুপ চালানো সেফ এবং ফাস্ট)
+            clean_pw = email_pass.replace(" ", "")
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(email_user, clean_pw)
+            
+            while st.session_state.run_bot:
+                counter += 1
+                
+                # ইমেইল তৈরি
+                msg = MIMEMultipart()
+                msg['From'] = email_user
+                msg['To'] = target_email
+                # সাবজেক্টে ইউনিক আইডি যোগ করা যাতে জিমেইল স্প্যাম না ধরে
+                msg['Subject'] = f"{mail_subject} (ID: {counter})"
+                msg.attach(MIMEText(mail_body, 'plain'))
+                
+                # মেইল সেন্ড
+                server.sendmail(email_user, target_email, msg.as_string())
+                
+                # রিয়েল টাইম আপডেট
+                with info_area.container():
+                    st.markdown(f"""
+                    <div class="status-box">
+                        <h2 style="color: #00ffcc;">বট এখন লাইভ রান হচ্ছে...</h2>
+                        <p style="font-size: 25px;">মোট মেইল পাঠানো হয়েছে: <b>{counter}</b> টি</p>
+                        <p>শুরু হয়েছে: {start_time} | বিরতি: {delay} সেকেন্ড</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                time.sleep(delay)
+                
+            server.quit()
+            
+        except Exception as e:
+            st.error(f"❌ কানেকশনে সমস্যা হয়েছে: {e}")
+            st.session_state.run_bot = False
+
+st.markdown("---")
+st.write("⚠️ **সতর্কতা:** আনলিমিটেড পাঠানোর সময় অন্তত ২-৫ সেকেন্ড গ্যাপ রাখুন, নাহলে জিমেইল আপনার অ্যাকাউন্ট সাময়িকভাবে ব্লক করতে পারে।")
